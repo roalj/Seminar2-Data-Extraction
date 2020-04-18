@@ -54,9 +54,50 @@ def xpath_rtv(pages):
             "Content": content
         }
 
+def create_array_from_matches(matches):
+    arr = []
+    for match in matches:
+        arr.append(match)
+
+    return arr
+
+
+def regular_expression_overstock(pages):
+    title_regex = r"<a.*<b>(.*)<\/b>\n*<\/a><br>"
+    list_price_regex = r"<td align=\"left\" nowrap=\"nowrap\"><s>(.*)<\/s><\/td>"
+    price_regex = r"<span class=\"bigred\"><b>(.*)<\/b><\/span>"
+    saving_regex = r"<span class=\"littleorange\">(.*) \(.*\)<\/span>"
+    saving_percent_regex = r"<span class=\"littleorange\">\$.* (.*)<\/span>"
+    content_regex = r"<td valign=\"top\"><span class=\"normal\">([\s\S]*?)<br><a href.*><span class=\"tiny\"><b>(.*)<\/b>"
+
+    for page in pages:
+        matches = re.compile(title_regex).findall(page)
+        titles = create_array_from_matches(matches)
+
+        matches = re.compile(list_price_regex).findall(page)
+        list_prices = create_array_from_matches(matches)
+
+        matches = re.compile(price_regex).findall(page)
+        prices = create_array_from_matches(matches)
+
+        matches = re.compile(saving_regex).findall(page)
+        savings = create_array_from_matches(matches)
+
+        matches = re.compile(saving_percent_regex).findall(page)
+        saving_percents = create_array_from_matches(matches)
+
+        matches = re.compile(content_regex).findall(page)
+        contents = []
+        for match in matches:
+            contents.append(match[0] + "\n" + match[1])
+
 
 rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 rtv2 = open('rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 
 #regular_expression_rtv([rtv1, rtv2])
 xpath_rtv([rtv1, rtv2])
+
+overstock1 = open('overstock.com/jewelry01.html', 'r',encoding="ISO-8859-1").read()
+overstock2 = open('overstock.com/jewelry02.html', 'r',encoding="ISO-8859-1").read()
+regular_expression_overstock([overstock1])
