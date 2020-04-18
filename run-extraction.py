@@ -147,7 +147,7 @@ def regular_expression_slonovice(pages):
             "Subtitle": subtitle,
             "Content": content
         }
-        #TODO poprvait encoding
+        #TODO poprvait encoding-> tudi drugje
         print("Output object:\n%s" % json.dumps(dataItem, indent=8))
 
 
@@ -159,20 +159,17 @@ def xpath_slonovice(pages):
         submit_date = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[1]')[0].text).strip()
         author = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[5]/span')[0].text).strip()
         subtitle = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[6]/h2/span')[0].text).strip()
+        content = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[2]/div[1]/div[1]/div[1]/text()')[0]).strip('\n').strip()
 
-        #TODO popravit izpisovanje
-        content = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[2]/div[1]/div[1]/div[1]/text()')).strip()
-
-        print(content)
-        # dataItem = {
-        #     "Title": title,
-        #     "Subject": subject,
-        #     "SubmitDate": submit_date,
-        #     "Author": author,
-        #     "Subtitle": subtitle,
-        #     "Content": content
-        # }
-        # print("Output object:\n%s" % json.dumps(dataItem, indent=8))
+        dataItem = {
+            "Title": title,
+            "Subject": subject,
+            "SubmitDate": submit_date,
+            "Author": author,
+            "Subtitle": subtitle,
+            "Content": content
+        }
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8))
 
 
 rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
