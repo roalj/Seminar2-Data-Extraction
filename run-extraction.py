@@ -85,7 +85,6 @@ def regular_expression_overstock(pages):
                 "SavingPercent": saving_percents[i],
                 "Content": contents[i]
             }
-            print("Output object:\n%s" % json.dumps(dataItem, indent=3))
 
 def xpath_overstock(pages):
     for page in pages:
@@ -120,7 +119,61 @@ def xpath_overstock(pages):
                 "SavingPercent": saving_percents[i],
                 "Content": contents[i]
             }
-            print("Output object:\n%s" % json.dumps(dataItem, indent=3))
+
+
+def regular_expression_slonovice(pages):
+    title_regex = r"<h1 class=\"itemTitle\">\s*([\s\S]*)<\/h1>"
+    subject_regex = r"<span class=\"itemSuperscript\">(.*)<\/span>"
+    author_regex = r"<span class=\"itemAuthor\">\s*Piše:\s+<span>(.*)<\/span>"
+    submit_date_regex = r"<span class=\"itemDatePublished\">\s*Objavljeno (.*)<\/span>"
+    subtitle_regex = r"<h2 class=\"itemSubtitle\">\s*<span>(.*)<\/span>"
+    content_regex = r"<div class=\"itemFullText\" .*>([\s\S]*)<div class=\"itemInfoboxText\""
+
+    for page in pages:
+        page = page.replace("&nbsp", "")
+
+        title = re.compile(title_regex).search(page).group(1).strip()
+        subject = re.compile(subject_regex).search(page).group(1).strip()
+        submit_date = re.compile(submit_date_regex).search(page).group(1)
+        author = re.compile(author_regex).search(page).group(1)
+        subtitle = re.compile(subtitle_regex).search(page).group(1)
+        content = re.compile(content_regex).search(page).group(1)
+
+        dataItem = {
+            "Title": title,
+            "Subject": subject,
+            "SubmitDate": submit_date,
+            "Author": author,
+            "Subtitle": subtitle,
+            "Content": content
+        }
+        #TODO poprvait encoding
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8))
+
+
+def xpath_slonovice(pages):
+    for page in pages:
+        tree = html.fromstring(page)
+        title = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[3]/h1')[0].text).strip()
+        subject = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[2]/span')[0].text).strip()
+        submit_date = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[1]')[0].text).strip()
+        author = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[5]/span')[0].text).strip()
+        subtitle = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[6]/h2/span')[0].text).strip()
+
+        #TODO popravit izpisovanje
+        content = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[2]/div[1]/div[1]/div[1]/text()')).strip()
+
+        print(content)
+        # dataItem = {
+        #     "Title": title,
+        #     "Subject": subject,
+        #     "SubmitDate": submit_date,
+        #     "Author": author,
+        #     "Subtitle": subtitle,
+        #     "Content": content
+        # }
+        # print("Output object:\n%s" % json.dumps(dataItem, indent=8))
+
 
 rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 rtv2 = open('rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
@@ -131,3 +184,7 @@ xpath_rtv([rtv1, rtv2])
 overstock1 = open('overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
 overstock2 = open('overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
 regular_expression_overstock([overstock1, overstock2])
+
+slovenskenovice1 = open('slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
+slovenskenovice2 = open('slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
+xpath_slonovice([slovenskenovice1, slovenskenovice2])
