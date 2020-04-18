@@ -54,12 +54,6 @@ def xpath_rtv(pages):
             "Content": content
         }
 
-def create_array_from_matches(matches):
-    arr = []
-    for match in matches:
-        arr.append(match)
-
-    return arr
 
 
 def regular_expression_overstock(pages):
@@ -71,26 +65,62 @@ def regular_expression_overstock(pages):
     content_regex = r"<td valign=\"top\"><span class=\"normal\">([\s\S]*?)<br><a href.*><span class=\"tiny\"><b>(.*)<\/b>"
 
     for page in pages:
-        matches = re.compile(title_regex).findall(page)
-        titles = create_array_from_matches(matches)
-
-        matches = re.compile(list_price_regex).findall(page)
-        list_prices = create_array_from_matches(matches)
-
-        matches = re.compile(price_regex).findall(page)
-        prices = create_array_from_matches(matches)
-
-        matches = re.compile(saving_regex).findall(page)
-        savings = create_array_from_matches(matches)
-
-        matches = re.compile(saving_percent_regex).findall(page)
-        saving_percents = create_array_from_matches(matches)
+        titles = re.compile(title_regex).findall(page)
+        list_prices = re.compile(list_price_regex).findall(page)
+        prices = re.compile(price_regex).findall(page)
+        savings = re.compile(saving_regex).findall(page)
+        saving_percents = re.compile(saving_percent_regex).findall(page)
 
         matches = re.compile(content_regex).findall(page)
         contents = []
         for match in matches:
             contents.append(match[0] + "\n" + match[1])
 
+        for i in range(len(titles)):
+            dataItem = {
+                "Title": titles[i],
+                "ListPrice": list_prices[i],
+                "Price": prices[i],
+                "Saving": savings[i],
+                "SavingPercent": saving_percents[i],
+                "Content": contents[i]
+            }
+            print("Output object:\n%s" % json.dumps(dataItem, indent=3))
+
+def xpath_overstock(pages):
+    for page in pages:
+        tree = html.fromstring(page)
+
+        titles = tree.xpath('/html/body/table[2]/tbody/tr[1]/td[5]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr/td/a/b')
+        titles = [title.text for title in titles]
+
+        list_prices = tree.xpath('/html/body/table[2]/tbody/tr[1]/td[5]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td[1]/table/tbody/tr[1]/td[2]/s')
+        list_prices = [list_price.text for list_price in list_prices]
+
+        prices = tree.xpath('/html/body/table[2]/tbody/tr[1]/td[5]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td[1]/table/tbody/tr[2]/td[2]/span/b')
+        prices = [price.text for price in prices]
+
+        saving_elements = tree.xpath('/html/body/table[2]/tbody/tr[1]/td[5]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td[1]/table/tbody/tr[3]/td[2]/span')
+
+        contents = tree.xpath('/html/body/table[2]/tbody/tr[1]/td[5]/table/tbody/tr[2]/td/table/tbody/tr/td/table/tbody/tr/td[2]/table/tbody/tr/td[2]/span')
+        contents = [content.text for content in contents]
+
+        savings = []
+        saving_percents = []
+        for saving_element in saving_elements:
+            savings.append(saving_element.text[:-6])
+            saving_percents.append(saving_element.text[-5:])
+
+        for i in range(len(titles)):
+            dataItem = {
+                "Title": titles[i],
+                "ListPrice": list_prices[i],
+                "Price": prices[i],
+                "Saving": savings[i],
+                "SavingPercent": saving_percents[i],
+                "Content": contents[i]
+            }
+            print("Output object:\n%s" % json.dumps(dataItem, indent=3))
 
 rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 rtv2 = open('rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
@@ -98,6 +128,6 @@ rtv2 = open('rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v ra
 #regular_expression_rtv([rtv1, rtv2])
 xpath_rtv([rtv1, rtv2])
 
-overstock1 = open('overstock.com/jewelry01.html', 'r',encoding="ISO-8859-1").read()
-overstock2 = open('overstock.com/jewelry02.html', 'r',encoding="ISO-8859-1").read()
-regular_expression_overstock([overstock1])
+overstock1 = open('overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
+overstock2 = open('overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
+regular_expression_overstock([overstock1, overstock2])
