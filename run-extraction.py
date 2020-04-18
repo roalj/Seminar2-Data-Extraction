@@ -147,8 +147,7 @@ def regular_expression_slonovice(pages):
             "Subtitle": subtitle,
             "Content": content
         }
-        #TODO poprvait encoding-> tudi drugje
-        print("Output object:\n%s" % json.dumps(dataItem, indent=8))
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 
 def xpath_slonovice(pages):
@@ -169,7 +168,7 @@ def xpath_slonovice(pages):
             "Subtitle": subtitle,
             "Content": content
         }
-        print("Output object:\n%s" % json.dumps(dataItem, indent=8))
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 
 rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
