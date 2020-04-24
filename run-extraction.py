@@ -1,9 +1,13 @@
 import re
 from lxml import html
 import json
+from bs4 import BeautifulSoup
 
 import requests
 
+from MyParser import MyHTMLParser
+
+removed_tags = ["script", "link", "meta"]
 # TODO 1  If the extracted value should be further processed, use regular expressions or other techniques to normalize them.?? a more bit datum dejasko datum al to kar je napisano?
 # TODO 2  a more bit content brez html tagov?
 def regular_expression_rtv(pages):
@@ -174,7 +178,11 @@ def xpath_slonovice(pages):
 rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 rtv2 = open('rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 
-#regular_expression_rtv([rtv1, rtv2])
+
+
+
+
+"""#regular_expression_rtv([rtv1, rtv2])
 xpath_rtv([rtv1, rtv2])
 
 overstock1 = open('overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
@@ -184,3 +192,34 @@ regular_expression_overstock([overstock1, overstock2])
 slovenskenovice1 = open('slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
 slovenskenovice2 = open('slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
 xpath_slonovice([slovenskenovice1, slovenskenovice2])
+"""
+def get_beautiful_page(page):
+    soup = BeautifulSoup(page, "html.parser")
+    clean_page(soup)
+    return soup
+
+def remove_html_tag(text, tag):
+    clean_one_tag = re.compile('<' + tag + '.*?/>', re.S)
+    text = re.sub(clean_one_tag, '', text)
+    clean = re.compile('<' + tag + '.*?>.*?</'+tag+'>', re.S)
+    return re.sub(clean, '', text)
+
+def clean_page(page):
+    head = page.find('head')
+    if head:
+        head.replace_with(page.find('title'))
+    [x.extract() for x in page.findAll('script')]
+
+
+page1 = get_beautiful_page(rtv1)
+page2 = get_beautiful_page(rtv2)
+
+page1_parser = MyHTMLParser()
+page1_parser.feed(page1.prettify())
+
+page2_parser = MyHTMLParser()
+page2_parser.feed(page2.prettify())
+
+#TODO compare tables and and create regular expresion
+print("page len:", len(page1.prettify()))
+print("rtv1 len:", len(page2.prettify()))
