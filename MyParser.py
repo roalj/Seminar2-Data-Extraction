@@ -1,31 +1,33 @@
+from abc import ABC
 from html.parser import HTMLParser
 import re
 
-class MyHTMLParser(HTMLParser):
+TYPE_START = "start"
+TYPE_END = "end"
+TYPE_DATA = "data"
+
+class MyHTMLParser(HTMLParser, ABC):
+
     def __init__(self):
         super().__init__()
         self.page_content = []
         self.page_trash = []
 
     def handle_starttag(self, tag, attrs):
-        self.page_content.append(DataTag(tag, "start", attrs))
-
-        print("Encountered a start tag:", tag)
+        self.page_content.append(DataTag(tag, TYPE_START, attrs))
 
     def handle_endtag(self, tag):
-        self.page_content.append(DataTag(tag, "end", None))
-        print("Encountered an end tag :", tag)
+        self.page_content.append(DataTag(tag, TYPE_END, None))
 
     def handle_data(self, data):
         if not "".__eq__(data) and not data.isspace():
             data = self.remove_spaces_new_line(data)
-            self.page_content.append(DataTag(data, "data", None))
-            print("Encountered some data  :", data)
+            self.page_content.append(DataTag(data, TYPE_DATA, None))
         else:
             self.page_trash.append(data)
-            print("zmesal se mi bo")
 
-    def remove_spaces_new_line(self, data):
+    @staticmethod
+    def remove_spaces_new_line(data):
         regex = r'\s+'
         return re.sub(regex, " ", data)
 
@@ -36,4 +38,41 @@ class DataTag:
         self.name = name
         self.type = type
         self.attrs = attrs
+
+    def __eq__(self, other):
+        if self.type == TYPE_START:
+            if "body" in self.name:
+                return self.name == other.name and self.type == other.type
+
+        return self.name == other.name and self.type == other.type and self.attrs == other.attrs
+
+    def is_data_type(self):
+        return self.type == TYPE_DATA
+
+    def is_start_type(self):
+        return self.type == TYPE_START
+
+    def is_end_type(self):
+        return self.type == TYPE_END
+
+    def is_same_start_tag(self, y):
+        return self.name == y.name
+
+    def __str__(self):
+        if self.type == TYPE_DATA:
+            return self.name
+        elif self.type == TYPE_START:
+            return '<' + self.name + '>'
+        elif self.type == TYPE_END:
+            return '<' + self.name + '/>\n'
+
+
+class DifferentLines:
+    def __init__(self, line, parse_content):
+        self.line = line
+        self.parse_content = parse_content
+
+    def __str__(self):
+        return self.line
+
 
