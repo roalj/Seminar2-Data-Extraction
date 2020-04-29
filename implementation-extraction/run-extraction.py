@@ -21,16 +21,16 @@ def regular_expression_rtv(pages):
         subtitle = re.compile(sub_title_regex).search(page).group(2)
         lead = re.compile(lead_regex).search(page).group(2)
         content = re.compile(content_regex).search(page).group(0)
-        print(content)
         dataItem = {
             "Author": author,
             "PublishedTime": published_time,
             "Title": title,
             "SubTitle": subtitle,
             "Lead": lead,
-            "Content": content
+          #  "Content": content
         }
-        #print(dataItem)
+
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 def xpath_rtv(pages):
     for page in pages:
@@ -53,6 +53,7 @@ def xpath_rtv(pages):
             "Lead": lead,
             "Content": content
         }
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 
 
@@ -85,6 +86,7 @@ def regular_expression_overstock(pages):
                 "SavingPercent": saving_percents[i],
                 "Content": contents[i]
             }
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 def xpath_overstock(pages):
     for page in pages:
@@ -119,6 +121,7 @@ def xpath_overstock(pages):
                 "SavingPercent": saving_percents[i],
                 "Content": contents[i]
             }
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 
 def regular_expression_slonovice(pages):
@@ -171,16 +174,17 @@ def xpath_slonovice(pages):
         print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 
-rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
-rtv2 = open('rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+rtv1 = open('input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+rtv2 = open('input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 
+#xpath_rtv([rtv1, rtv2])
 #regular_expression_rtv([rtv1, rtv2])
-xpath_rtv([rtv1, rtv2])
 
-overstock1 = open('overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
-overstock2 = open('overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
+
+overstock1 = open('input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
+overstock2 = open('input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
 regular_expression_overstock([overstock1, overstock2])
 
-slovenskenovice1 = open('slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
-slovenskenovice2 = open('slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
-xpath_slonovice([slovenskenovice1, slovenskenovice2])
+
+slovenskenovice1 = open('input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
+slovenskenovice2 = open('input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
