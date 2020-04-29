@@ -1,17 +1,15 @@
 import re
 from lxml import html
 import json
-from bs4 import BeautifulSoup, NavigableString
+from bs4 import BeautifulSoup
 import difflib
-import requests
+import sys
 
 from MyParser import MyHTMLParser, DifferentLines
 
 PLACE_HOLDER = "#qwe1qwe"
 
 
-# TODO 1  If the extracted value should be further processed, use regular expressions or other techniques to normalize them.?? a more bit datum dejasko datum al to kar je napisano?
-# TODO 2  a more bit content brez html tagov?
 def regular_expression_rtv(pages):
     author_regex = r"<div class=\"author-name\">(.*)<\/div>"
     published_time_regex = r"<div class=\"publish-meta\">[\n\s]*(.*)<br>"
@@ -407,17 +405,39 @@ def get_page_wrapper(_page1, _page2):
     return soup
 
 
-rtv1 = open('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
-rtv2 = open('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
-overstock1 = open('../input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
-overstock2 = open('../input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
-slovenskenovice1 = open('../input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
-slovenskenovice2 = open('../input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
+# rtv1 = open('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+# rtv2 = open('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+# overstock1 = open('../input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
+# overstock2 = open('../input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
+# slovenskenovice1 = open('../input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
+# slovenskenovice2 = open('../input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
 
 
 """regular_expression_slonovice([slovenskenovice1, slovenskenovice2])
 xpath_slonovice([slovenskenovice1, slovenskenovice2])"""
 
+#
+# wrapper = get_page_wrapper(rtv1, rtv2)
+# test = wrapper.prettify()
 
-wrapper = get_page_wrapper(rtv1, rtv2)
-test = wrapper.prettify()
+if __name__ == '__main__':
+    method = sys.argv[1]
+
+    rtv1 = open('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+    rtv2 = open('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+    overstock1 = open('../input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
+    overstock2 = open('../input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
+    slovenskenovice1 = open('../input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
+    slovenskenovice2 = open('../input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
+
+    if (method == "A"):
+        regular_expression_rtv([rtv1, rtv2])
+        regular_expression_overstock([overstock1, overstock2])
+        regular_expression_slonovice([slovenskenovice1, slovenskenovice2])
+    elif (method == "B"):
+        xpath_rtv([rtv1, rtv2])
+        xpath_overstock([overstock1, overstock2])
+        xpath_slonovice([slovenskenovice1, slovenskenovice2])
+    #elif (method == "C") :
+    #TODO
+
