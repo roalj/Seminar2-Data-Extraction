@@ -38,7 +38,6 @@ def regular_expression_rtv(pages):
         }
 
         print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
-
 def xpath_rtv(pages):
     for page in pages:
         tree = html.fromstring(page)
@@ -49,8 +48,8 @@ def xpath_rtv(pages):
         lead = str(tree.xpath('//*[@id="main-container"]/div[3]/div/header/p')[0].text)
 
         content = ""
-        for items in tree.xpath('//*[@id="main-container"]/div[3]/div/div[2]/article/p'):
-            content += items.text_content() + "\n"
+        for items in tree.xpath('//*[@id="main-container"]/div[3]/div/div[2]//*[not(self::script)]/text()'):
+            content += items + "\n"
 
         dataItem = {
             "Author": author,
@@ -58,7 +57,7 @@ def xpath_rtv(pages):
             "Title": title,
             "SubTitle": subtitle,
             "Lead": lead,
-            "Content": content
+            "Content": re.sub(r"\s+", " ", content)
         }
         print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
@@ -184,7 +183,7 @@ def xpath_slonovice(pages):
 rtv1 = open('input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 rtv2 = open('input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 
-#xpath_rtv([rtv1, rtv2])
+xpath_rtv([rtv1])
 regular_expression_rtv([rtv1])
 
 
