@@ -12,7 +12,7 @@ def regular_expression_rtv(pages):
     title_regex = r"<header class=\"article-header\">(.|\n)*<h1>(.*)<\/h1>"
     sub_title_regex = r"<header class=\"article-header\">(.|\n)*<div class=\"subtitle\">(.*)<\/div>"
     lead_regex = r"<header class=\"article-header\">(.|\n)*<p class=\"lead\">[\n\s]*(.*)<\/p>"
-    content_regex = r"<div class=\"article-body\">(\s|\n|.)*?<div class=\"article-column\""
+    content_regex = r"<div class=\"article-body\">(\s|\n|.)*?<div class=\"article-column\">"
 
     for page in pages:
         author = re.compile(author_regex).search(page).group(1)
@@ -21,13 +21,20 @@ def regular_expression_rtv(pages):
         subtitle = re.compile(sub_title_regex).search(page).group(2)
         lead = re.compile(lead_regex).search(page).group(2)
         content = re.compile(content_regex).search(page).group(0)
+
+        #remove script tags
+        content = re.sub(r"<script([\S\s]*?)>([\S\s]*?)<\/script>", "", content)
+        #remove all tags
+        content = re.sub(r"<[^>]*>", "", content)
+        #remove \n \t tags
+        content = re.sub(r"\s+", " ", content)
         dataItem = {
             "Author": author,
             "PublishedTime": published_time,
             "Title": title,
             "SubTitle": subtitle,
             "Lead": lead,
-          #  "Content": content
+            "Content": content.strip()
         }
 
         print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
@@ -178,13 +185,16 @@ rtv1 = open('input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijsk
 rtv2 = open('input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
 
 #xpath_rtv([rtv1, rtv2])
-#regular_expression_rtv([rtv1, rtv2])
+regular_expression_rtv([rtv1])
 
 
 overstock1 = open('input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
 overstock2 = open('input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
-regular_expression_overstock([overstock1, overstock2])
+
+#regular_expression_overstock([overstock1, overstock2])
 
 
 slovenskenovice1 = open('input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
 slovenskenovice2 = open('input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
+
+#regular_expression_slonovice([slovenskenovice1])
