@@ -18,7 +18,7 @@ def regular_expression_rtv(pages):
     title_regex = r"<header class=\"article-header\">(.|\n)*<h1>(.*)<\/h1>"
     sub_title_regex = r"<header class=\"article-header\">(.|\n)*<div class=\"subtitle\">(.*)<\/div>"
     lead_regex = r"<header class=\"article-header\">(.|\n)*<p class=\"lead\">[\n\s]*(.*)<\/p>"
-    content_regex = r"<div class=\"article-body\">(\s|\n|.)*?<div class=\"article-column\""
+    content_regex = r"<div class=\"article-body\">(\s|\n|.)*?<div class=\"article-column\">"
 
     for page in pages:
         author = re.compile(author_regex).search(page).group(1)
@@ -27,18 +27,23 @@ def regular_expression_rtv(pages):
         subtitle = re.compile(sub_title_regex).search(page).group(2)
         lead = re.compile(lead_regex).search(page).group(2)
         content = re.compile(content_regex).search(page).group(0)
-        print(content)
+
+        #remove script tags
+        content = re.sub(r"<script([\S\s]*?)>([\S\s]*?)<\/script>", "", content)
+        #remove all tags
+        content = re.sub(r"<[^>]*>", "", content)
+        #remove \n \t tags
+        content = re.sub(r"\s+", " ", content)
         dataItem = {
             "Author": author,
             "PublishedTime": published_time,
             "Title": title,
             "SubTitle": subtitle,
             "Lead": lead,
-            "Content": content
+            "Content": content.strip()
         }
-        # print(dataItem)
 
-
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 def xpath_rtv(pages):
     for page in pages:
         tree = html.fromstring(page)
@@ -49,8 +54,8 @@ def xpath_rtv(pages):
         lead = str(tree.xpath('//*[@id="main-container"]/div[3]/div/header/p')[0].text)
 
         content = ""
-        for items in tree.xpath('//*[@id="main-container"]/div[3]/div/div[2]/article/p'):
-            content += items.text_content() + "\n"
+        for items in tree.xpath('//*[@id="main-container"]/div[3]/div/div[2]//*[not(self::script)]/text()'):
+            content += items + "\n"
 
         dataItem = {
             "Author": author,
@@ -58,8 +63,9 @@ def xpath_rtv(pages):
             "Title": title,
             "SubTitle": subtitle,
             "Lead": lead,
-            "Content": content
+            "Content": re.sub(r"\s+", " ", content)
         }
+        print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 
 def regular_expression_overstock(pages):
@@ -91,6 +97,7 @@ def regular_expression_overstock(pages):
                 "SavingPercent": saving_percents[i],
                 "Content": contents[i]
             }
+            print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
 
 
 def xpath_overstock(pages):
@@ -131,6 +138,8 @@ def xpath_overstock(pages):
                 "SavingPercent": saving_percents[i],
                 "Content": contents[i]
             }
+            print("Output object:\n%s" % json.dumps(dataItem, indent=8, ensure_ascii=False))
+
 
 
 def regular_expression_slonovice(pages):
@@ -146,10 +155,17 @@ def regular_expression_slonovice(pages):
 
         title = re.compile(title_regex).search(page).group(1).strip()
         subject = re.compile(subject_regex).search(page).group(1).strip()
-        submit_date = re.compile(submit_date_regex).search(page).group(1)
-        author = re.compile(author_regex).search(page).group(1)
-        subtitle = re.compile(subtitle_regex).search(page).group(1)
-        content = re.compile(content_regex).search(page).group(1)
+        submit_date = re.compile(submit_date_regex).search(page).group(1).strip()
+        author = re.compile(author_regex).search(page).group(1).strip()
+        subtitle = re.compile(subtitle_regex).search(page).group(1).strip()
+        content = re.compile(content_regex).search(page).group(1).strip()
+
+        # remove script tags
+        content = re.sub(r"<script([\S\s]*?)>([\S\s]*?)<\/script>", " ", content)
+        # remove all tags
+        content = re.sub(r"<[^>]*>", " ", content)
+        # remove \n \t tags
+        content = re.sub(r"\s+", " ", content)
 
         dataItem = {
             "Title": title,
@@ -163,17 +179,17 @@ def regular_expression_slonovice(pages):
 
 def xpath_slonovice(pages):
     for page in pages:
+
         tree = html.fromstring(page)
         title = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[3]/h1')[0].text).strip()
         subject = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[2]/span')[0].text).strip()
-        submit_date = str(
-            tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[1]')[0].text).strip()
-        author = str(
-            tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[5]/span')[0].text).strip()
-        subtitle = str(
-            tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[6]/h2/span')[0].text).strip()
-        content = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[2]/div[1]/div[1]/div[1]/text()')[0]).strip(
-            '\n').strip()
+        submit_date = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[1]')[0].text).strip()
+        author = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[4]/span/span[5]/span')[0].text).strip()
+        subtitle = str(tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[1]/div[1]/div/div[6]/h2/span')[0].text).strip()
+
+        content = ""
+        for items in tree.xpath('//*[@id="ocmContainer"]/div[1]/div/div[2]/div[1]/div[1]/div[1]//text()[not(parent::script)]'):
+            content += items.strip()
 
         dataItem = {
             "Title": title,
@@ -391,26 +407,17 @@ def get_page_wrapper(_page1, _page2):
     return soup
 
 
-rtv1 = open('rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
-rtv2 = open('rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
-overstock1 = open('overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
-overstock2 = open('overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
-slovenskenovice1 = open('slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html','r', encoding='utf-8').read()
-slovenskenovice2 = open('slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
+rtv1 = open('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+rtv2 = open('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+overstock1 = open('../input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
+overstock2 = open('../input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
+slovenskenovice1 = open('../input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
+slovenskenovice2 = open('../input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
+
+
+"""regular_expression_slonovice([slovenskenovice1, slovenskenovice2])
+xpath_slonovice([slovenskenovice1, slovenskenovice2])"""
+
 
 wrapper = get_page_wrapper(rtv1, rtv2)
 test = wrapper.prettify()
-
-1
-"""#regular_expression_rtv([rtv1, rtv2])
-xpath_rtv([rtv1, rtv2])
-
-overstock1 = open('overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
-overstock2 = open('overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
-regular_expression_overstock([overstock1, overstock2])
-
-slovenskenovice1 = open('slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
-slovenskenovice2 = open('slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
-xpath_slonovice([slovenskenovice1, slovenskenovice2])
-"""
-# print("rtv1 len:", len(page2.prettify()))
