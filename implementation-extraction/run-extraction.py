@@ -6,9 +6,12 @@ import difflib
 import sys
 
 from MyParser import MyHTMLParser, DifferentLines
+from collections import defaultdict
 
-PLACE_HOLDER = "#qwe1qwe"
-
+PLACE_HOLDER = "#text"
+PH_SCRIPT = "#script"
+SHORTEN_ATTRIBUTES = ["style", "itemprop", "itemtype", "data-photo-count", "onmousedown", "onclick", "href", "data-io-article-url", "title", "data-type", "data-gr-c-s-loaded", "aria-hidden", "data-os"]
+VALID_ATTRIBUTES = ["class", "id"]
 
 def regular_expression_rtv(pages):
     author_regex = r"<div class=\"author-name\">(.*)<\/div>"
@@ -224,6 +227,8 @@ def clean_page(page):
     [x.extract() for x in page.findAll('iframe')]
     [x.extract() for x in page.findAll('img')]
     [x.extract() for x in page.findAll('br')]
+    [x.extract() for x in page.findAll('footer')]
+    [x.extract() for x in page.findAll('nav')]
 
 
 def is_junk(text):
@@ -285,15 +290,20 @@ def get_ratio(start_tag1, start_tag2):
         start_tag1.attrs = ''
     if not start_tag2.attrs:
         start_tag2.attrs = ''
+    string1 = " ".join(str(x) for x in start_tag1.attrs)
+    string2 = " ".join(str(x) for x in start_tag2.attrs)
 
-    return difflib.SequenceMatcher(None, start_tag1.attrs, start_tag2.attrs).ratio()
+    return difflib.SequenceMatcher(None, string1, string2).ratio()
 
 
 # TODO find first start tag?
 def is_similar_start_tag(x, y):
+    if len(x.parse_content) < 1 or len(y.parse_content) < 1:
+        return False
+
     # ratio = get_ratio(x.parse_content[0], y.parse_content[0])
-    return (not (x.get_first_content() == y.get_first_content())) \
-           and x.parse_content[0].is_same_start_tag(y.parse_content[0]) \
+    #return (not (x.get_first_content() == y.get_first_content())) \
+    return x.parse_content[0].is_same_start_tag(y.parse_content[0]) \
            and get_ratio(x.parse_content[0], y.parse_content[0]) > 0
 
 def get_duplicates_with_diff_content(diff_with_content):
@@ -327,8 +337,8 @@ def get_lines_with_content(_diff_lines):
     _diff_with_content = []
     for x in _diff_lines:
         parsed_data_tag = retrieve_content(x[1:])
-        if contains_content(parsed_data_tag):
-            _diff_with_content.append(DifferentLines(x, parsed_data_tag.page_content))
+        #if contains_content(parsed_data_tag):
+        _diff_with_content.append(DifferentLines(x, parsed_data_tag.page_content))
     return _diff_with_content
 
 
@@ -337,9 +347,12 @@ def replace_dynamic_text(pairs, lines):
     for line in lines:
         for pair in pairs:
             if pair.line == line:
-                first_content = pair.get_first_content().name
-                line = line.replace(first_content, PLACE_HOLDER)[1:]
-                continue
+                if pair.get_first_content() is not None:
+                    first_content = pair.get_first_content().name
+                    line = line.replace('>'+first_content, '>'+PLACE_HOLDER)[1:]
+                    for attr in pair.attr_remove:
+                        line = line.replace(attr[0], "(" + (attr[1]) + ".*)")
+                    continue
         if line.startswith("-"):
             line = line[1:]
         new_lines.append(line)
@@ -349,16 +362,6 @@ def replace_dynamic_text(pairs, lines):
 def list_to_string(s):
     str1 = " "
     return (str1.join(s))
-
-def walker(soup):
-    # soup = BeautifulSoup.BeautifulSoup(html)
-    for child in soup.recursiveChildGenerator():
-        name = getattr(child, "name", None)
-
-        if name is not None:
-            print(name)
-        elif not child.isspace():  # leaf node, don't print spaces
-            print(child)
 
 def recursiveChildren(x):
     contains_diff_child = []
@@ -373,7 +376,6 @@ def recursiveChildren(x):
                 # child.extract()
     else:
         if not x.isspace():  # Just to avoid printing "\n" parsed from document.
-            print("[Terminal Node]", x)
             if PLACE_HOLDER in str(x.encode('utf-8')):
                 is_this_one_needed = True
 
@@ -393,32 +395,59 @@ def get_pairs(diff_lines):
     pairs = get_duplicates_with_diff_content(diff_with_content)
     return pairs
 
+def remove_useless_attributs():
+    PH_SCRIPT
+
+
+def shorten_attr(pairs):
+    for i in range(0, len(pairs)-1, 2):
+        minus = i
+        plus = i+1
+        if pairs[i+1].line.startswith("-"):
+            minus = i + 1
+            plus = i
+
+        _p1 = pairs[minus]
+        _p2 = pairs[plus]
+        pairs[i].attr_remove = _p1.compare_start_tags(_p2)
+
+    return pairs
+
+def remove_useless_attri(_soup):
+    for tag in _soup():
+        all_attrs = {}
+        for attr, value in tag.attrs.items():
+            if attr in VALID_ATTRIBUTES:
+                all_attrs[attr] = value
+        tag.attrs = all_attrs
+
+def remove_useless_tags(_soup):
+    to_remove, is_child_needed = recursiveChildren(_soup)
+    for element in to_remove:
+        element.extract()
+
 def get_page_wrapper(_page1, _page2):
     diff_lines = compare_files(_page1, _page2)
     cleaned_lines_copy = remove_unwanted_lines(list(diff_lines), ['?', '+'])
     pairs = get_pairs(diff_lines)
-    result = replace_dynamic_text(pairs, cleaned_lines_copy)
+    clean_pairs = shorten_attr(pairs)
+
+    result = replace_dynamic_text(clean_pairs, cleaned_lines_copy)
     soup = get_beautiful_page(list_to_string(result))
-    to_remove, is_child_needed = recursiveChildren(soup)
-    for element in to_remove:
-        element.extract()
+    remove_useless_tags(soup)
+    remove_useless_attri(soup)
+
     return soup
 
+"""
+rtv1 = open('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+rtv2 = open('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
+overstock1 = open('../input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
+overstock2 = open('../input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
+slovenskenovice1 = open('../input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
+slovenskenovice2 = open('../input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
+"""
 
-# rtv1 = open('../input-extraction/rtvslo.si/Audi A6 50 TDI quattro_ nemir v premijskem razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
-# rtv2 = open('../input-extraction/rtvslo.si/Volvo XC 40 D4 AWD momentum_ suvereno med najboljše v razredu - RTVSLO.si.html', 'r', encoding='utf8').read()
-# overstock1 = open('../input-extraction/overstock.com/jewelry01.html', 'r', encoding="ISO-8859-1").read()
-# overstock2 = open('../input-extraction/overstock.com/jewelry02.html', 'r', encoding="ISO-8859-1").read()
-# slovenskenovice1 = open('../input-extraction/slovenskenovice.si/Aljaž, ki je prebolel covid-19_ Lahko se že počutiš izvrstno, pa pride spet udar in ne moreš nič.html', 'r', encoding='utf-8').read()
-# slovenskenovice2 = open('../input-extraction/slovenskenovice.si/Hrvaška podaljšala ukrep, ki se tiče tudi Slovencev.html', 'r', encoding='utf-8').read()
-
-
-"""regular_expression_slonovice([slovenskenovice1, slovenskenovice2])
-xpath_slonovice([slovenskenovice1, slovenskenovice2])"""
-
-#
-# wrapper = get_page_wrapper(rtv1, rtv2)
-# test = wrapper.prettify()
 
 if __name__ == '__main__':
     method = sys.argv[1]
@@ -438,6 +467,14 @@ if __name__ == '__main__':
         xpath_rtv([rtv1, rtv2])
         xpath_overstock([overstock1, overstock2])
         xpath_slonovice([slovenskenovice1, slovenskenovice2])
-    #elif (method == "C") :
-    #TODO
+    elif (method == "C") :
+        wrapper_rtv = get_page_wrapper(rtv1, rtv2)
+        wrapper_overstock = get_page_wrapper(overstock1, overstock2)
+        wrapper_slo = get_page_wrapper(slovenskenovice1, slovenskenovice2)
+
+        print((str(wrapper_rtv)))
+        print((str(wrapper_overstock)))
+        print((str(wrapper_slo)))
+
+
 

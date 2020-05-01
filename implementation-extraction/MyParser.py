@@ -40,10 +40,11 @@ class DataTag:
         self.attrs = attrs
 
     def __eq__(self, other):
-        if self.type == TYPE_START:
-            if "body" in self.name:
-                return self.name == other.name and self.type == other.type
-
+        #if self.type == TYPE_START:
+            #if "body" in self.name:
+            #   return self.name == other.name and self.type == other.type
+        if self is None or other is None:
+            return False
         return self.name == other.name and self.type == other.type and self.attrs == other.attrs
 
     def is_data_type(self):
@@ -74,7 +75,7 @@ class DifferentLines:
     def __init__(self, line, parse_content):
         self.line = line
         self.parse_content = parse_content
-
+        self.attr_remove = []
     def __str__(self):
         return self.line
 
@@ -84,6 +85,50 @@ class DifferentLines:
                 return x
         return None
 
+    def get_all_start_tags(self):
+        start_tags = []
+        for x in self.parse_content:
+            if x.is_start_type():
+                start_tags.append(x)
+        return start_tags
+
+    def get_lowest_len(self, str1, str2):
+        if len(str1) < len(str2):
+            return len(str1)
+        return len(str2)
+
+    def num_of_common_chars(self, _str1, _str2):
+        n = self.get_lowest_len(_str1, _str2)
+        count = 0
+        for i in range(n):
+            if _str1[i] == _str2[i]:
+                count += 1
+            else:
+                return count
+        return count
+
+    def compare_attr(self, attrs1, attrs2):
+        diff_attr = []
+        if len(attrs1) == len(attrs2):
+            for i in range(len(attrs1)):
+                A = attrs1[i]
+                B = attrs2[i]
+                if len(A) > 1 and len(B) > 1:
+                    if A[0] == B[0] and A[1] != B[1]:
+                        num_comm = self.num_of_common_chars(A[1], B[1])
+                        if len(A[1]) != num_comm:
+                            diff_attr.append((A[1], A[1][:num_comm]))
+        return diff_attr
+
+    def compare_start_tags(self, diff2):
+        diff_attributs = []
+        tags1 = self.get_all_start_tags()
+        tags2 = diff2.get_all_start_tags()
+        if len(tags1) == len(tags2):  #imata enako start tagov
+            for i in range(len(tags1)):
+                diff_attributs += self.compare_attr(tags1[i].attrs, tags2[i].attrs)
+                #if tags1[0] == "class"
+        return diff_attributs
 
 
 #test
